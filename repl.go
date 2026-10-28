@@ -5,17 +5,22 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
+
+	"github.com/WeepingOphelia/pokedexgo/internal/pokecache"
 )
 
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(*config) error
+	callback    func(*config, []string) error
 }
 
 type config struct {
 	commands map[string]cliCommand
-	loc      int
+	mapNext  string
+	mapPrev  *string
+	mapCache *pokecache.Cache
 }
 
 func cleanInput(input string) []string {
@@ -31,6 +36,11 @@ func getConfig() *config {
 				description: "Exit the Pokedex",
 				callback:    commandExit,
 			},
+			"explore": {
+				name:        "explore",
+				description: "Explore a location",
+				callback:    commandExplore,
+			},
 			"help": {
 				name:        "help",
 				description: "Displays a help message",
@@ -41,8 +51,15 @@ func getConfig() *config {
 				description: "Lists locations",
 				callback:    commandMap,
 			},
+			"mapb": {
+				name:        "mapb",
+				description: "Lists previous locations",
+				callback:    commandMapBack,
+			},
 		},
-		loc: 1,
+		mapNext:  "https://pokeapi.co/api/v2/location-area/",
+		mapPrev:  nil,
+		mapCache: pokecache.NewCache(5 * time.Second),
 	}
 }
 
@@ -60,7 +77,7 @@ func pokeScan(cfg *config) {
 		cmd := words[0]
 
 		if c, exists := cfg.commands[cmd]; exists {
-			err := c.callback(cfg)
+			err := c.callback(cfg, words[1:])
 			if err != nil {
 				fmt.Println("Error:", err)
 			}
