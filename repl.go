@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/WeepingOphelia/pokedexgo/internal/pokeapi"
 	"github.com/WeepingOphelia/pokedexgo/internal/pokecache"
 )
 
@@ -21,6 +22,7 @@ type config struct {
 	mapNext  string
 	mapPrev  *string
 	mapCache *pokecache.Cache
+	pokedex  map[string]pokeapi.Pokemon
 }
 
 func cleanInput(input string) []string {
@@ -31,6 +33,11 @@ func cleanInput(input string) []string {
 func getConfig() *config {
 	return &config{
 		commands: map[string]cliCommand{
+			"catch": {
+				name:        "catch",
+				description: "Attempt to catch a Pokemon",
+				callback:    commandCatch,
+			},
 			"exit": {
 				name:        "exit",
 				description: "Exit the Pokedex",
@@ -46,6 +53,11 @@ func getConfig() *config {
 				description: "Displays a help message",
 				callback:    commandHelp,
 			},
+			"inspect": {
+				name:        "inspect",
+				description: "Inspect a Pokemon in your Pokedex",
+				callback:    commandInspect,
+			},
 			"map": {
 				name:        "map",
 				description: "Lists locations",
@@ -56,10 +68,16 @@ func getConfig() *config {
 				description: "Lists previous locations",
 				callback:    commandMapBack,
 			},
+			"pokedex": {
+				name:        "pokedex",
+				description: "Lists all Pokemon in your Pokedex",
+				callback:    commandPokedex,
+			},
 		},
 		mapNext:  "https://pokeapi.co/api/v2/location-area/",
 		mapPrev:  nil,
 		mapCache: pokecache.NewCache(5 * time.Second),
+		pokedex:  make(map[string]pokeapi.Pokemon),
 	}
 }
 
